@@ -1,0 +1,166 @@
+---
+title: "UTS Data Mining dan Knowledge Management"
+author: "Vania Rizki Oktaviasari/221810640/31/3SI2"
+date: "10/27/2020"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(neuralnet)
+library(caret)
+library(dplyr)
+```
+
+## Attribute Information:
+
+Gender: nominal
+Symptoms: nominal
+Alcohol: nominal
+Hepatitis B Surface Antigen: nominal
+Hepatitis B e Antigen: nominal
+Hepatitis B Core Antibody: nominal
+Hepatitis C Virus Antibody: nominal
+Cirrhosis : nominal
+Endemic Countries: nominal
+Smoking: nominal
+Diabetes: nominal
+Obesity: nominal
+Hemochromatosis: nominal
+Arterial Hypertension: nominal
+Chronic Renal Insufficiency: nominal
+Human Immunodeficiency Virus: nominal
+Nonalcoholic Steatohepatitis: nominal
+Esophageal Varices: nominal
+Splenomegaly: nominal
+Portal Hypertension: nominal
+Portal Vein Thrombosis: nominal
+Liver Metastasis: nominal
+Radiological Hallmark: nominal
+Age at diagnosis: integer
+Grams of Alcohol per day: continuous
+Packs of cigarets per year: continuous
+Performance Status: ordinal
+Encefalopathy degree: ordinal
+Ascites degree: ordinal
+International Normalised Ratio: continuous
+Alpha-Fetoprotein (ng/mL): continuous
+Haemoglobin (g/dL): continuous
+Mean Corpuscular Volume (fl): continuous
+Leukocytes(G/L): continuous
+Platelets (G/L): continuous
+Albumin (mg/dL): continuous
+Total Bilirubin(mg/dL): continuous
+Alanine transaminase (U/L): continuous
+Aspartate transaminase (U/L): continuous
+Gamma glutamyl transferase (U/L): continuous
+Alkaline phosphatase (U/L): continuous
+Total Proteins (g/dL): continuous
+Creatinine (mg/dL): continuous
+Number of Nodules: integer
+Major dimension of nodule (cm): continuous
+Direct Bilirubin (mg/dL): continuous
+Iron (mcg/dL): continuous
+Oxygen Saturation (%): continuous
+Ferritin (ng/mL): continuous
+Class: nominal (1 if patient survives, 0 if patient died)
+
+## KLASIFIKASI KESEHATAN PASIEN HCC
+
+```{r}
+data <- read.csv("hcc-data.txt", header = F)
+head(data)
+summary(data)
+str(data)
+
+for(i in names(data)){
+  ifelse(is.character(data[,i]) == TRUE, data[,i] <- as.factor(data[,i]), data[,i])
+}
+str(data)
+
+# Normalisasi Data
+normalisasi <- function(r){
+  return((r-min(r))/(max(r)-min(r)))
+}
+for(i in colnames(data[-50])){
+    ifelse(is.factor(data[,i]) == TRUE, data[,i], data[ ,i] <- normalisasi(data[ ,i]))
+}
+head(data)
+summary(data)
+
+# Menghilangkan missing value
+dataBaru <- data
+str(dataBaru)
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+for(i in 1:length(dataBaru)) {
+    matches <- grepl("\\?", dataBaru[ ,i])
+    for(j in 1:length(matches)) {
+        ifelse(matches[j] == TRUE && is.numeric(dataBaru) == TRUE, dataBaru[j,i] <- median(dataBaru[,i], na.rm = TRUE), matches[j])
+    }
+}
+for(i in 1:length(dataBaru)) {
+    matches <- grepl("\\?", dataBaru[ ,i])
+    for(j in 1:length(matches)) {
+        ifelse(matches[j] == TRUE && is.factor(dataBaru) == TRUE, dataBaru[j,i] <- getmode(dataBaru[,i]), matches[j])
+    }
+}
+head(dataBaru)
+for(i in 1:length(dataBaru)) {
+    matches <- grepl("\\?", dataBaru[ ,i])
+    for(j in 1:length(matches)) {
+        ifelse(matches[j] == TRUE, dataBaru[j,i] <- round(mean(dataBaru[,i], na.rm = TRUE)), matches[j])
+    }
+}
+## dataBaru <- na.omit(dataBaru)
+head(dataBaru)
+summary(dataBaru)
+for(i in 1:length(dataBaru)) {
+    for(j in 1:length(matches)) {
+        ifelse(is.na(dataBaru[j,i]), dataBaru[j,i] <- getmode(dataBaru[,i]), dataBaru[j,1])
+    }
+}
+head(dataBaru)
+summary(dataBaru)
+for(i in names(dataBaru)){
+  dataBaru[,i]=as.numeric(dataBaru[,i])
+}
+str(dataBaru)
+for(i in 1:length(dataBaru)) {
+    for(j in 1:length(matches)) {
+        ifelse(is.na(dataBaru[j,i]) == TRUE, dataBaru[j,i] <- median(dataBaru[,i], na.rm = TRUE), matches[j])
+    }
+}
+```
+Data yang missing jika bertipe numerik diganti dengan mediannya, dan yang faktor diganti dengan modusnya
+## SPLIT DATA
+
+```{r}
+set.seed(1234)
+sampel <- sample(2,nrow(dataBaru),replace = T, prob = c(0.8,0.2))
+trainingdat <- dataBaru[sampel==1, ]
+testingdat <- dataBaru[sampel==2, ]
+print(paste("Jumlah train data :", nrow(trainingdat), "Jumlah test data :", nrow(testingdat)))
+```
+## MEMBUAT MODEL
+```{r}
+set.seed(1234)
+#model dengan 1 hidden layer dan hidden node
+modelnn<-neuralnet(V50~., data=trainingdat,
+                   hidden = 1,
+                   err.fct = "sse",
+                   linear.output = F)
+plot(modelnn)
+```
+## PREDIKSI
+```{r}
+##prediksi <- compute(modelnn, testingdat[ ,-50])
+##prediksi <- compute(modelnn, testingdat[,-50])
+##pred <- ifelse(prediksi$net.result>0.5, 1, 0)
+##head(pred)
+```
+Pak Ibnu maaf saya tidak selesai mengerjakan..
